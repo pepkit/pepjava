@@ -1,0 +1,8 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+.idea
+lolacore.csv
+target
+test-project.yaml
+*.*~

@@ -90,6 +90,7 @@ public class SampleTable {
         return csvTable.getRows();
     }
 
+    // sample modifiers remove attributes
     public boolean processRemove(List<String> attributes) {
         for (String attr: attributes) {
             if (csvTable != null && csvTable.columnNames.contains(attr)) {
@@ -103,5 +104,14 @@ public class SampleTable {
             }
         }
         return true;
+    }
+
+    // sample modifiers append section
+    public void processAppend(Map<String,String> attrVal) {
+        var ntimes = this.csvTable.rows.size();
+        attrVal.forEach((k,v) -> {
+            this.csvTable.columnNames.add(k);
+            this.csvTable.rows.put(k,Collections.nCopies(ntimes, v));
+        });
     }
 }

@@ -114,4 +114,13 @@ public class SampleTable {
             this.csvTable.rows.put(k,Collections.nCopies(ntimes, v));
         });
     }
+
+    // sample modifiers duplicate functionality
+    public void processDuplicate(Map<String,String> d) {
+        // duplicates key of d map into the value, copies the list with new attribute
+        d.forEach((k,v) -> {
+            this.csvTable.columnNames.add(v);
+            this.csvTable.rows.put(v, List.copyOf(this.csvTable.rows.get(k)));
+        });
+    }
 }

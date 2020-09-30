@@ -49,6 +49,4 @@ public class SampleModifiers {
     public void setRemove(List<String> remove) {
         this.remove = remove;
     }
-
-
 }

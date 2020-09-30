@@ -33,5 +33,15 @@ public class MainClass {
             } else
                 System.out.println("Some attributes not removed.");
         }
+        if (yamlProject.getSample_modifiers().getAppend() != null) {
+            project.getSampleTable().processAppend(yamlProject.getSample_modifiers().getAppend());
+            System.out.println("After APPEND:");
+            sampleTable.getSampleTableHeaders().forEach(System.out::println);
+        }
+        if (yamlProject.getSample_modifiers().getImply() != null) {
+            project.getSampleTable().processImply(yamlProject.getSample_modifiers().getImply());
+            System.out.println("After IMPLY:");
+            sampleTable.getSampleTableHeaders().forEach(System.out::println);
+        }
     }
 }

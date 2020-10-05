@@ -181,6 +181,7 @@ public class SampleTable {
     }
 
     // FIXME: improve error reporting
+    // FIXME: implement wildcards and $HOME support
     public void processDerive(Derive derive) {
         List<String> attr = derive.getAttributes();
         Map<String, String> sources = derive.getSources();

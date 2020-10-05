@@ -43,5 +43,8 @@ public class MainClass {
             System.out.println("After IMPLY:");
             sampleTable.getSampleTableHeaders().forEach(System.out::println);
         }
+        if (yamlProject.getSample_modifiers().getDerive() != null) {
+            project.getSampleTable().processDerive(yamlProject.getSample_modifiers().getDerive());
+        }
     }
 }

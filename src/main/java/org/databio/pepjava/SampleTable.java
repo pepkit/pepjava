@@ -1,7 +1,11 @@
 package org.databio.pepjava;
 
 import java.io.FileReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class SampleTable {
 
@@ -174,5 +178,57 @@ public class SampleTable {
             // now replace the new then columns with modified ones
             thenCols.forEach((k,v) -> { this.csvTable.rows.put(k,v); });
         });
+    }
+
+    // FIXME: improve error reporting
+    public void processDerive(Derive derive) {
+        List<String> attr = derive.getAttributes();
+        Map<String, String> sources = derive.getSources();
+        // check if we have the attributes in the columns
+        for (String a : attr) {
+            if (!this.csvTable.columnNames.contains(a)) {
+                System.out.println("derive(): Attribute " + a + " does not exist in sample file. Aborting.");
+                return;
+            }
+        }
+        //attr.forEach(a -> System.out.println("attr=" + a));
+        //sources.forEach((k, v) -> System.out.println("k=" + k + ",v=" + v));
+        // fully expand sources
+        // colName is a String
+        // row is a Map<String,List<String>>
+        for (String key : this.csvTable.rows.keySet()) {
+            if (attr.contains(key)) {
+                List<String> rows = this.csvTable.rows.get(key);
+                for (int cnt = 0; cnt < rows.size(); cnt++) {
+                    String row = rows.get(cnt);
+                    if (sources.containsKey(row)) {
+                        //System.out.println("Row entry for " + key + " equals one of sources:" + sources.keySet());
+                        String val = sources.get(row);
+                        //System.out.println("Value is: " + val);
+                        List<String> pl = Pattern.compile("/")
+                                .splitAsStream(val)
+                                .collect(Collectors.toList());
+                        String finalPath = "";
+                        for (String p : pl) {
+                            if (p.startsWith("{") && p.endsWith("}")) {
+                                String coln = p.substring(1, p.length() - 1);
+                                //System.out.println("coln=" + coln);
+                                // get the value of the referred field
+                                String referred = this.csvTable.rows.get(coln).get(cnt);
+                                //System.out.println("Referred value @" + coln + " is " + referred);
+                                finalPath += referred;
+                            } else
+                                finalPath += p + "/";
+                        }
+                        //System.out.println("Fully expanded final path=" + finalPath);
+                        rows.set(cnt, finalPath);
+                    }
+                }
+            }
+        }
+        // check to make sure the change has stuck
+        /*this.csvTable.rows.forEach((k,v) -> {
+            System.out.println("k=" + k + ", v=" + v);
+        });*/
     }
 }

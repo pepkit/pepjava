@@ -1,7 +1,19 @@
 # pepjava
 
-First commit, implements basic reading capability for PEP spec in Java. It also allows reading of CSV sample files.
+This is a java library to read and process [PEP](http://pep.databio.org/en/latest/specification/) specifications.
 
-Only sample_modifiers->remove functionality implemented.
+## How to use
 
-No tests yet. Not of any quality to advertise. Work in progress.
+Currently, the MainClass.java file shows how to instantiate the functionality. The key classes to use are:
+
+``
+YamlProject
+SampleTable
+``
+
+Methods within SampleTable that start with _process_ (processImply, processDerive...) are of particular interest.
+
+## Status
+
+No unit tests yet. Not of any quality to advertise. Work in progress.
+

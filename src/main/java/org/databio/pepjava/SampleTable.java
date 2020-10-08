@@ -79,6 +79,15 @@ public class SampleTable {
         }
     }
 
+    // this method implements the "amend" capability of the PEP spec
+    public CSVTable mergeTables(CSVTable other) {
+        // merge two tables into one by:
+        // keeping all the columns of this table not overriden by the other table
+        // overriding existing columns of this table from the other table
+        // adding the columns from other table not in this table
+        return other;
+    }
+    
     public String getSampleTableFileName() {
         return csvFileName;
     }

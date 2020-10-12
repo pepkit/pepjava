@@ -66,28 +66,62 @@ public class SampleTable {
     }
 
     private String csvFileName;
-    private FileReader csvFile;
+    //private FileReader csvFile;
     private CSVTable csvTable;
 
     public SampleTable(String fname) {
         csvFileName = fname;
+        csvTable = readCSVFile(fname);
+    }
+
+    private CSVTable readCSVFile(String fname) {
         try {
-            csvFile = new FileReader(csvFileName);
-            csvTable = this.new CSVTable(csvFile);
+            FileReader csvFile = new FileReader(fname);
+            return this.new CSVTable(csvFile);
         } catch (java.io.FileNotFoundException fnfe) {
             System.out.println("File " + fname + " not found!");
+            return null;
         }
     }
 
     // this method implements the "amend" capability of the PEP spec
-    public CSVTable mergeTables(CSVTable other) {
-        // merge two tables into one by:
+    private void mergeTables(CSVTable other) {
+        // merge two CSV tables into one by:
         // keeping all the columns of this table not overriden by the other table
         // overriding existing columns of this table from the other table
         // adding the columns from other table not in this table
-        return other;
+        Set<String> sHeadersThis = new HashSet<>(this.csvTable.columnNames);
+        Set<String> sHeadersOther = new HashSet<>(other.columnNames);
+        Set<String> sHeadersKeep = new HashSet<>(sHeadersThis);
+        sHeadersKeep.removeIf(sHeadersOther::contains); // columns to keep
+        // now get the columns to override
+        Set<String> sHeadersOverride = new HashSet<>(sHeadersThis);
+        sHeadersOverride.stream().filter(sHeadersOther::contains); // columns to override
+        // find the columns to add
+        Set<String> sHeadersAppend = new HashSet<>(sHeadersOther);
+        sHeadersAppend.removeIf(sHeadersThis::contains); // columns to append
+        // now do the job at hand by modifying in place
+        Set<String> sHeadersFinal = new HashSet<>(sHeadersKeep);
+        sHeadersFinal.addAll(sHeadersAppend);
+        sHeadersFinal.addAll(sHeadersAppend);
+        // final list of column names
+        this.csvTable.columnNames = new ArrayList<>(sHeadersFinal);
+        // now take care of the actual data rows/columns
+        Map<String, List<String>> rowsFinal = new HashMap<>();
+        sHeadersKeep.forEach(h -> {
+            rowsFinal.put(h, this.csvTable.rows.get(h));
+        });
+        sHeadersOverride.forEach(h -> {
+            rowsFinal.put(h, other.rows.get(h));
+        });
+        sHeadersAppend.forEach(h -> {
+            rowsFinal.put(h, other.rows.get(h));
+        });
+        // final rows set here
+        this.csvTable.rows = rowsFinal;
+        return;
     }
-    
+
     public String getSampleTableFileName() {
         return csvFileName;
     }
@@ -241,4 +275,11 @@ public class SampleTable {
             System.out.println("k=" + k + ", v=" + v);
         });*/
     }
+
+    // process the amend portion of the PEP spec
+    public void processAmend(String fname) {
+        CSVTable other = readCSVFile(fname);
+        mergeTables(other);
+    }
+
 }

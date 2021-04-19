@@ -4,7 +4,7 @@ public class YAMLProject {
     // version of pep spec implemented
     private String pep_version;
     // the path to the sample table
-    private String sample_table;
+    private String sample_table = null;
     private SampleModifiers sample_modifiers;
     private ProjectModifiers project_modifiers;
 

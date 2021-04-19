@@ -15,36 +15,17 @@ public class MainClass {
             com.fasterxml.jackson.core.JsonProcessingException,
             com.fasterxml.jackson.databind.JsonMappingException {
 
-        File yamlSource = new File("test-project.yaml");
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper.findAndRegisterModules();
-        YAMLProject yamlProject = mapper.readValue(yamlSource, YAMLProject.class);
-        Project project = new Project(yamlProject);
+        Project project = new Project("test-project.yaml", mapper);
         SampleTable sampleTable = project.getSampleTable();
         sampleTable.getSampleTableHeaders().forEach(System.out::println);
         System.out.println(sampleTable.getSampleTableRows().keySet());
         System.out.println("===========================");
-        if (yamlProject.getSample_modifiers().getRemove() != null) {
-            System.out.println("Removing " + yamlProject.getSample_modifiers().getRemove() + " sample attributes.");
-            if (project.getSampleTable().processRemove(yamlProject.getSample_modifiers().getRemove())) {
-                System.out.println("Column headers left in sample table");
-                sampleTable.getSampleTableHeaders().forEach(System.out::println);
-                System.out.println("Columns left in sample table: " + sampleTable.getSampleTableRows().keySet());
-            } else
-                System.out.println("Some attributes not removed.");
-        }
-        if (yamlProject.getSample_modifiers().getAppend() != null) {
-            project.getSampleTable().processAppend(yamlProject.getSample_modifiers().getAppend());
-            System.out.println("After APPEND:");
-            sampleTable.getSampleTableHeaders().forEach(System.out::println);
-        }
-        if (yamlProject.getSample_modifiers().getImply() != null) {
-            project.getSampleTable().processImply(yamlProject.getSample_modifiers().getImply());
-            System.out.println("After IMPLY:");
-            sampleTable.getSampleTableHeaders().forEach(System.out::println);
-        }
-        if (yamlProject.getSample_modifiers().getDerive() != null) {
-            project.getSampleTable().processDerive(yamlProject.getSample_modifiers().getDerive());
+        YAMLProject yamlProject = project.getYamlProject();
+
+        if (yamlProject.getProject_modifiers().getImport() != null) {
+            yamlProject.getProject_modifiers().getImport().stream().forEach(System.out::println);
         }
     }
 }

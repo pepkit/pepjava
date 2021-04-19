@@ -137,7 +137,7 @@ public class SampleTable {
         return csvTable.getRows();
     }
 
-    // sample modifiers remove attributes
+    // removes (a list of) columns from the table of samples
     public boolean processRemove(List<String> attributes) {
         for (String attr: attributes) {
             if (csvTable != null && csvTable.columnNames.contains(attr)) {
@@ -153,7 +153,8 @@ public class SampleTable {
         return true;
     }
 
-    // sample modifiers append section
+    // appends a column to the table of samples
+    // where each row in the column has the same value
     public void processAppend(Map<String,String> attrVal) {
         var ntimes = this.csvTable.rows.size();
         attrVal.forEach((k,v) -> {
@@ -162,7 +163,7 @@ public class SampleTable {
         });
     }
 
-    // sample modifiers duplicate functionality
+    // duplicates a column in the table of samples
     public void processDuplicate(Map<String,String> d) {
         // duplicates key of d map into the value, copies the list with new attribute
         d.forEach((k,v) -> {
@@ -277,9 +278,23 @@ public class SampleTable {
     }
 
     // process the amend portion of the PEP spec
-    public void processAmend(String fname) {
-        CSVTable other = readCSVFile(fname);
-        mergeTables(other);
+    // anything can be replaced with anything else
+    public void processAmend(Map<String,String> amendMap, String choiceAmendment) {
+        // FIXME: Better error handling!
+        if (!amendMap.containsKey(choiceAmendment)) {
+            System.out.println("Amendment passed on command line does not match what is in PEP file.");
+            System.exit(-1);
+        }
+        if (amendMap.containsKey("sample_table")) {
+            // replace the current sample table with a new one
+            this.csvTable = readCSVFile(amendMap.get("sample_table"));
+        }
+        for (String attr : amendMap.keySet()) {
+            if (getSampleTableHeaders().equals(attr))
+                // attribute already exists, we are replacing it
+                processRemove(Collections.singletonList(attr));
+            processAppend(Collections.singletonMap(attr,amendMap.get(attr)));
+        }
     }
 
 }

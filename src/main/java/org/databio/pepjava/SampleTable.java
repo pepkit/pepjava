@@ -226,47 +226,67 @@ public class SampleTable {
 
     // FIXME: improve error reporting
     // FIXME: implement wildcards and $HOME support
-    public void processDerive(Derive derive) {
-        List<String> attr = derive.getAttributes();
+    public void processDerive(Derive derive) throws DeriveNoAttrFoundException {
+        Map<String, String> env = System.getenv(); // environment variables may be needed
+        List<String> attrs = derive.getAttributes();
         Map<String, String> sources = derive.getSources();
         // check if we have the attributes in the columns
-        for (String a : attr) {
-            if (!this.csvTable.columnNames.contains(a)) {
-                System.out.println("derive(): Attribute " + a + " does not exist in sample file. Aborting.");
-                return;
-            }
+        for (String a : attrs) {
+            if (!this.csvTable.columnNames.contains(a))
+                throw new DeriveNoAttrFoundException("derive(): Attribute " + a + " does not exist in sample file. Aborting.");
         }
-        //attr.forEach(a -> System.out.println("attr=" + a));
+        //attrs.forEach(a -> System.out.println("attr=" + a));
         //sources.forEach((k, v) -> System.out.println("k=" + k + ",v=" + v));
-        // fully expand sources
-        // colName is a String
-        // row is a Map<String,List<String>>
-        for (String key : this.csvTable.rows.keySet()) {
-            if (attr.contains(key)) {
-                List<String> rows = this.csvTable.rows.get(key);
-                for (int cnt = 0; cnt < rows.size(); cnt++) {
-                    String row = rows.get(cnt);
-                    if (sources.containsKey(row)) {
-                        //System.out.println("Row entry for " + key + " equals one of sources:" + sources.keySet());
-                        String val = sources.get(row);
-                        //System.out.println("Value is: " + val);
+        // we want to process all columns keyed by the name of the attribute
+        // in each column we will search for the keys listed in the sources dictionary
+        for (String columnName : this.csvTable.rows.keySet()) {
+            // "key" is the name of the row's column in the dictionary
+            if (attrs.contains(columnName)) {
+                // rows will be the column keyed by columnName
+                List<String> column = this.csvTable.rows.get(columnName);
+                for (int idx = 0; idx < column.size(); idx++) {
+                    String columnContentAtIndex = column.get(idx);
+                    if (sources.containsKey(columnContentAtIndex)) {
+                        String val = sources.get(columnContentAtIndex);
                         List<String> pl = Pattern.compile("/")
                                 .splitAsStream(val)
                                 .collect(Collectors.toList());
                         String finalPath = "";
+                        int cnt=0; int plLen = pl.toArray().length;
                         for (String p : pl) {
-                            if (p.startsWith("{") && p.endsWith("}")) {
-                                String coln = p.substring(1, p.length() - 1);
-                                //System.out.println("coln=" + coln);
-                                // get the value of the referred field
-                                String referred = this.csvTable.rows.get(coln).get(cnt);
-                                //System.out.println("Referred value @" + coln + " is " + referred);
-                                finalPath += referred;
+                            if (p.startsWith("$")) {
+                                finalPath += env.get(p.substring(1,p.length()));
+                            } else if (p.indexOf('{') >= 0) {
+                                // we could have multiple {<something>} placeholders
+                                // e.g. /{organism}_{time}h/
+                                String workingCopy = p;
+                                while (true) {
+                                    int start = workingCopy.indexOf('{');
+                                    int end = workingCopy.indexOf('}');
+                                    if ((start != -1) && (end != -1 && end > start)) {
+                                        // get the variable to substitute
+                                        String subst = workingCopy.substring(start+1,end);
+                                        if (this.csvTable.rows.containsKey(subst)) {
+                                            List<String> rows = this.csvTable.rows.get(subst);
+                                            String subst_with = rows.get(idx);
+                                            finalPath += subst_with;
+                                        }
+                                        workingCopy = workingCopy.substring(end+1, workingCopy.length());
+                                    } else {
+                                        finalPath += workingCopy;
+                                        break;
+                                    }
+                                }
                             } else
-                                finalPath += p + "/";
+                                finalPath += p;
+                            if (cnt < plLen-1)
+                                finalPath += "/";
+                            cnt += 1;
                         }
+                        if (val.endsWith("/"))
+                            finalPath += "/";
                         //System.out.println("Fully expanded final path=" + finalPath);
-                        rows.set(cnt, finalPath);
+                        column.set(idx, finalPath);
                     }
                 }
             }

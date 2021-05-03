@@ -5,6 +5,7 @@ public class YAMLProject {
     private String pep_version;
     // the path to the sample table
     private String sample_table = null;
+    private String output_dir = null;
     private SampleModifiers sample_modifiers;
     private ProjectModifiers project_modifiers;
 
@@ -14,6 +15,14 @@ public class YAMLProject {
 
     public void setPep_version(String pep_version) {
         this.pep_version = pep_version;
+    }
+
+    public String getOutput_dir() {
+        return output_dir;
+    }
+
+    public void setOutput_dir(String output_dir) {
+        this.output_dir = output_dir;
     }
 
     public String getSample_table() {

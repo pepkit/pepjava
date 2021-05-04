@@ -138,19 +138,22 @@ public class SampleTable {
     }
 
     // removes (a list of) columns from the table of samples
-    public boolean processRemove(List<String> attributes) {
+    public boolean processRemove(List<String> attributes) throws RemoveAttributeNotFoundException {
+        List<String> missingAttrs = new ArrayList<String>();
         for (String attr: attributes) {
+            System.out.println("attr=" + attr);
             if (csvTable != null && csvTable.columnNames.contains(attr)) {
                 // remove from rows as well
                 csvTable.rows.remove(attr);
                 csvTable.columnNames.removeIf((String x) -> x.equals(attr));
-            } else {
-                // FIXME: Better error communication
-                System.out.println("Attribute " + attr + " from remove section does not exist in sample table");
-                return false;
-            }
+            } else
+                missingAttrs.add(attr);
         }
-        return true;
+        System.out.println(missingAttrs.isEmpty());
+        if (missingAttrs.isEmpty())
+            return true;
+        else
+            throw new RemoveAttributeNotFoundException(missingAttrs.toString());
     }
 
     // appends a column to the table of samples
@@ -299,7 +302,7 @@ public class SampleTable {
 
     // process the amend portion of the PEP spec
     // anything can be replaced with anything else
-    public void processAmend(Map<String,String> amendMap, String choiceAmendment) {
+    public void processAmend(Map<String,String> amendMap, String choiceAmendment) throws RemoveAttributeNotFoundException {
         // FIXME: Better error handling!
         if (!amendMap.containsKey(choiceAmendment)) {
             System.out.println("Amendment passed on command line does not match what is in PEP file.");

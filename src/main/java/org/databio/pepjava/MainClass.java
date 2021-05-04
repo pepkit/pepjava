@@ -25,6 +25,7 @@ public class MainClass implements Callable<Integer> {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         mapper.findAndRegisterModules();
         Project project = new Project(pepProjectFileName, mapper);
+        project.processAllSections();
         SampleTable sampleTable = project.getSampleTable();
         sampleTable.getSampleTableHeaders().forEach(System.out::println);
         System.out.println(sampleTable.getSampleTableRows().keySet());

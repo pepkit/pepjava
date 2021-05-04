@@ -28,12 +28,12 @@ public class Project {
     private SampleTable sampleTable = null;
     private String projectFullFileName = null;
     private String projectPathName = null;
+    private ObjectMapper mapper;
 
-    public Project(String name, ObjectMapper mapper) throws
-            com.fasterxml.jackson.core.JsonProcessingException,
-            com.fasterxml.jackson.databind.JsonMappingException {
+    public Project(String name, ObjectMapper mapper) {
         try {
-            System.out.println("Entering project " + name);
+            this.mapper = mapper;
+            //System.out.println("Entering project " + name);
             projectFullFileName = name;
             // discern between URL and local filename
             if (name.startsWith("http")) {
@@ -44,79 +44,83 @@ public class Project {
                 projectPathName = f.getParent();
                 yamlProject = mapper.readValue(f, YAMLProject.class);
             }
-            //sampleTable = new SampleTable(yamlProject.getSample_table());
-            // see if there is anything to import
-            if (yamlProject.getProject_modifiers() == null) {
-                System.out.println("No project modifiers in project");
-                processAll(null);
-            } else {
-                System.out.println("Processing all");
-                List<String> imports = yamlProject.getProject_modifiers().getImport();
-                if (!imports.isEmpty()) {
-                    System.out.println("Processing imports!");
-                    // go down the list of imports
-                    // read a project and then reconcile it with the next in the list
-                    // and finally apply this project to that reconciliation
-                    Project first = new Project(imports.get(0), mapper);
-                    for (int i = 1; i < imports.size(); i++) {
-                        Project next = new Project(imports.get(i), mapper);
-                        // reconcile projects?
-                        next.processAll(first);
-                        first = next;
-                    }
-                    processAll(first);
-                } else
-                    processAll(null);
-            }
         } catch (java.io.IOException ioe) {
             System.out.println(ioe.getMessage());
             System.out.println("Cannot find file " + name);
         }
     }
 
-    public void processAll(Project other) {
-        try {
-            if (this.yamlProject.getSample_table() != null) {
-                if (projectPathName != null)
-                    this.sampleTable = new SampleTable(projectPathName + File.separator + yamlProject.getSample_table());
-                else
-                    this.sampleTable = new SampleTable(yamlProject.getSample_table());
-            }
-            if (this.yamlProject.getSample_modifiers() == null) {
-                System.out.println("No sample modifiers in this project.");
+    public void processAllSections() throws RemoveAttributeNotFoundException,
+            DeriveNoAttrFoundException,
+            com.fasterxml.jackson.core.JsonProcessingException,
+            com.fasterxml.jackson.databind.JsonMappingException  {
+        //sampleTable = new SampleTable(yamlProject.getSample_table());
+        // see if there is anything to import
+        if (yamlProject.getProject_modifiers() == null) {
+            System.out.println("No project modifiers in project");
+            processAll(null);
+        } else {
+            System.out.println("Processing all");
+            List<String> imports = yamlProject.getProject_modifiers().getImport();
+            if (!imports.isEmpty()) {
+                System.out.println("Processing imports!");
+                // go down the list of imports
+                // read a project and then reconcile it with the next in the list
+                // and finally apply this project to that reconciliation
+                Project first = new Project(imports.get(0), mapper);
+                for (int i = 1; i < imports.size(); i++) {
+                    Project next = new Project(imports.get(i), mapper);
+                    // reconcile projects?
+                    next.processAll(first);
+                    first = next;
+                }
+                processAll(first);
+            } else
+                processAll(null);
+        }
+    }
+
+    private void processAll(Project other)
+            throws RemoveAttributeNotFoundException,
+            DeriveNoAttrFoundException {
+        if (this.yamlProject.getSample_table() != null) {
+            if (projectPathName != null)
+                this.sampleTable = new SampleTable(projectPathName + File.separator + yamlProject.getSample_table());
+            else
+                this.sampleTable = new SampleTable(yamlProject.getSample_table());
+        }
+        if (this.yamlProject.getSample_modifiers() == null) {
+            System.out.println("No sample modifiers in this project.");
+        } else {
+            if (other != null) {
+                // start out with an existing samples table (from other)
+                // and apply all transformations from this PEP file on that
+                other.processAll(null);
             } else {
-                if (other != null) {
-                    // start out with an existing samples table (from other)
-                    // and apply all transformations from this PEP file on that
-                    other.processAll(null);
-                } else {
-                    // go through the whole pep now
-                    if (yamlProject.getSample_modifiers().getRemove() != null) {
-                        System.out.println("Removing " + yamlProject.getSample_modifiers().getRemove() + " sample attributes.");
-                        if (getSampleTable().processRemove(yamlProject.getSample_modifiers().getRemove())) {
-                            System.out.println("Column headers left in sample table");
-                            sampleTable.getSampleTableHeaders().forEach(System.out::println);
-                            System.out.println("Columns left in sample table: " + sampleTable.getSampleTableRows().keySet());
-                        } else
-                            System.out.println("Some attributes not removed.");
-                    }
-                    if (yamlProject.getSample_modifiers().getAppend() != null) {
-                        getSampleTable().processAppend(yamlProject.getSample_modifiers().getAppend());
-                        System.out.println("After APPEND:");
+                // go through the whole pep now
+                if (yamlProject.getSample_modifiers().getRemove() != null) {
+                    System.out.println("Removing " + yamlProject.getSample_modifiers().getRemove() + " sample attributes.");
+                    if (getSampleTable().processRemove(yamlProject.getSample_modifiers().getRemove())) {
+                        System.out.println("Column headers left in sample table");
                         sampleTable.getSampleTableHeaders().forEach(System.out::println);
-                    }
-                    if (yamlProject.getSample_modifiers().getImply() != null) {
-                        getSampleTable().processImply(yamlProject.getSample_modifiers().getImply());
-                        System.out.println("After IMPLY:");
-                        sampleTable.getSampleTableHeaders().forEach(System.out::println);
-                    }
-                    if (yamlProject.getSample_modifiers().getDerive() != null) {
-                        getSampleTable().processDerive(yamlProject.getSample_modifiers().getDerive());
-                    }
+                        System.out.println("Columns left in sample table: " + sampleTable.getSampleTableRows().keySet());
+                    } else
+                        System.out.println("Some attributes not removed.");
+                }
+                if (yamlProject.getSample_modifiers().getAppend() != null) {
+                    getSampleTable().processAppend(yamlProject.getSample_modifiers().getAppend());
+                    System.out.println("After APPEND:");
+                    sampleTable.getSampleTableHeaders().forEach(System.out::println);
+                }
+                if (yamlProject.getSample_modifiers().getImply() != null) {
+                    getSampleTable().processImply(yamlProject.getSample_modifiers().getImply());
+                    System.out.println("After IMPLY:");
+                    sampleTable.getSampleTableHeaders().forEach(System.out::println);
+                }
+                if (yamlProject.getSample_modifiers().getDerive() != null) {
+                    getSampleTable().processDerive(yamlProject.getSample_modifiers().getDerive());
                 }
             }
-        } catch (DeriveNoAttrFoundException dnafe) {
-            System.out.println(dnafe.getMessage());
         }
     }
 
@@ -136,7 +140,7 @@ public class Project {
         this.sampleTable = sampleTable;
     }
 
-    public void sampleModifiersRemove() {
+    public void sampleModifiersRemove() throws RemoveAttributeNotFoundException {
         sampleTable.processRemove(yamlProject.getSample_modifiers().getRemove());
     }
 }

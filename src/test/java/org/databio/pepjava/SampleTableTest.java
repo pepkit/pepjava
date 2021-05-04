@@ -31,6 +31,20 @@ class SampleTableTest {
     }
 
     @org.junit.jupiter.api.Test
+    void processRemove_confirm_attr_removed() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        mapper.findAndRegisterModules();
+        Project project = new Project("src/test/resources/remove_test.yaml", mapper);
+        try {
+            project.processAllSections();
+        } catch (Exception e) {
+            // we know the "missing" attribute will trigger an exception
+            // but the 2nd attribute ("protocol") should have been removed
+            assertEquals(project.getSampleTable().getSampleTableHeaders().size(), 4);
+        }
+    }
+
+    @org.junit.jupiter.api.Test
     void processAppend() {
     }
 

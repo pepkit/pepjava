@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Assertions;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class SampleTableTest {
@@ -49,7 +51,26 @@ class SampleTableTest {
     }
 
     @org.junit.jupiter.api.Test
-    void processDuplicate() {
+    void processDuplicate_correct() {
+        try {
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            mapper.findAndRegisterModules();
+            Project project = new Project("src/test/resources/duplicate_correct.yaml", mapper);
+            project.processAllSections();
+            YAMLProject yamlProject = project.getYamlProject();
+            if (yamlProject.getSample_modifiers() != null && yamlProject.getSample_modifiers().getDuplicate() != null)
+                project.getSampleTable().processDuplicate(yamlProject.getSample_modifiers().getDuplicate());
+
+            assertTrue(project.getSampleTable().getSampleTableHeaders().contains("animal"));
+            List<String> rowsAnimal = project.getSampleTable().getSampleTableRows().get("animal");
+            assertNotNull(rowsAnimal);
+            assert(!rowsAnimal.isEmpty());
+            List<String> rowsOrganism = project.getSampleTable().getSampleTableRows().get("organism");
+            assertNotNull(rowsOrganism);
+            assert(!rowsOrganism.isEmpty());
+
+            assert(rowsAnimal.equals(rowsOrganism));
+        } catch (Exception e) {}
     }
 
     @org.junit.jupiter.api.Test

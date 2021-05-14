@@ -3,4 +3,4 @@ sample_table: sample_table.csv
 
 sample_modifiers:
   duplicate:
-    organism:
+    organism: animal

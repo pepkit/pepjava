@@ -112,6 +112,11 @@ public class Project {
                     System.out.println("After APPEND:");
                     sampleTable.getSampleTableHeaders().forEach(System.out::println);
                 }
+                if (yamlProject.getSample_modifiers().getDuplicate() != null) {
+                    getSampleTable().processDuplicate(yamlProject.getSample_modifiers().getDuplicate());
+                    System.out.println("After DUPLICATE:");
+                    sampleTable.getSampleTableHeaders().forEach(System.out::println);
+                }
                 if (yamlProject.getSample_modifiers().getImply() != null) {
                     getSampleTable().processImply(yamlProject.getSample_modifiers().getImply());
                     System.out.println("After IMPLY:");

@@ -47,30 +47,41 @@ class SampleTableTest {
     }
 
     @org.junit.jupiter.api.Test
-    void processAppend() {
+    void processAppend_correct() {
+        assertDoesNotThrow(() -> {
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            mapper.findAndRegisterModules();
+            Project project = new Project("src/test/resources/append_correct.yaml", mapper);
+            project.processAllSections();
+            YAMLProject yamlProject = project.getYamlProject();
+            assertTrue(project.getSampleTable().getSampleTableHeaders().contains("read_type"));
+            List<String> rowsReadType = project.getSampleTable().getSampleTableRows().get("read_type");
+            assertNotNull(rowsReadType);
+            assert(!rowsReadType.isEmpty());
+            assert(rowsReadType.size() == project.getSampleTable().getSampleTableRows().get("protocol").size());
+            assert(rowsReadType.get(0).equals("SINGLE"));
+            assert(rowsReadType.get(rowsReadType.size()-1).equals("SINGLE"));
+        });
     }
 
     @org.junit.jupiter.api.Test
-    void processDuplicate_correct() {
-        try {
+    void processDuplicate() {
+        assertDoesNotThrow(() -> {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.findAndRegisterModules();
             Project project = new Project("src/test/resources/duplicate_correct.yaml", mapper);
             project.processAllSections();
             YAMLProject yamlProject = project.getYamlProject();
-            if (yamlProject.getSample_modifiers() != null && yamlProject.getSample_modifiers().getDuplicate() != null)
-                project.getSampleTable().processDuplicate(yamlProject.getSample_modifiers().getDuplicate());
-
             assertTrue(project.getSampleTable().getSampleTableHeaders().contains("animal"));
             List<String> rowsAnimal = project.getSampleTable().getSampleTableRows().get("animal");
             assertNotNull(rowsAnimal);
-            assert(!rowsAnimal.isEmpty());
+            assert (!rowsAnimal.isEmpty());
             List<String> rowsOrganism = project.getSampleTable().getSampleTableRows().get("organism");
             assertNotNull(rowsOrganism);
-            assert(!rowsOrganism.isEmpty());
-
-            assert(rowsAnimal.equals(rowsOrganism));
-        } catch (Exception e) {}
+            assert (!rowsOrganism.isEmpty());
+            assert (rowsAnimal.equals(rowsOrganism));
+            assert (rowsAnimal.size() == rowsOrganism.size());
+        });
     }
 
     @org.junit.jupiter.api.Test
@@ -90,19 +101,17 @@ class SampleTableTest {
 
     @org.junit.jupiter.api.Test
     void processDerive_missing_closing_bracket() {
-        try {
+        assertDoesNotThrow(() -> {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.findAndRegisterModules();
             Project project = new Project("src/test/resources/derive_missing_closing_bracket.yaml", mapper);
             project.processAllSections();
             YAMLProject yamlProject = project.getYamlProject();
-            if (yamlProject.getSample_modifiers() != null && yamlProject.getSample_modifiers().getDerive() != null)
-                project.getSampleTable().processDerive(yamlProject.getSample_modifiers().getDerive());
             String attr = yamlProject.getSample_modifiers().getDerive().getAttributes().get(0);
             String expected = "/data/lab/project/pig_{timeh.fastq";
 
             assertEquals(project.getSampleTable().getSampleTableRows().get(attr).get(1), expected);
-        } catch (Exception e) {}
+        });
     }
     /*@org.junit.jupiter.api.Test
     void processAmend() {

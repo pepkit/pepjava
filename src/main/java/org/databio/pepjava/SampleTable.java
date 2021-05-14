@@ -1,5 +1,7 @@
 package org.databio.pepjava;
 
+import com.sun.security.jgss.GSSUtil;
+
 import java.io.FileReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;

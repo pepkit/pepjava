@@ -180,16 +180,16 @@ public class SampleTable {
     // process the if->then section
     // in a later iteration we will probably signal errors better
     public void processImply(List<IfThen> ifthenList) {
+        Map<String,List<String>> thenCols = new HashMap<>();
         // the _if part of the if->then section can be a list of it can be a single string
         ifthenList.forEach(ifthen -> {
             Map<String,Object> _if = ifthen.getIf();
             Map<String,String> _then = ifthen.getThen();
             // does the implied (then:) column exist in the sample?
             _then.forEach((k,v) -> {
-                if (!this.csvTable.columnNames.contains(k)) {
+                if (!this.csvTable.columnNames.contains(k))
                     // no, add a column of null values for now
                     processAppend(Map.of(k,""));
-                }
             });
             // iterate through the existing column with key k (if: section)
             // and see what values need to be changed in new column
@@ -203,33 +203,34 @@ public class SampleTable {
             List<String> column = this.csvTable.rows.get(ifkey);
             // create empty lists for all _then columns
             // we will use these to build up the new columns
-            Map<String,List<String>> thenCols = new HashMap<>();
             _then.forEach((k,v) -> {
-                thenCols.put(k, new ArrayList<>());
+                if (!thenCols.containsKey(k)) {
+                    thenCols.put(k, new ArrayList<>());
+                    // initialize the rezulting "fixed" up / implied columns
+                    for (int i=0; i<column.size(); i++) thenCols.get(k).add("");
+                }
             });
             // now run through the if columns and try and modify the then columns
-            for (int i=0; i<column.size(); i++) {
+            for (int i=1; i<column.size(); i++) {
+                final int j = i;
                 String row = column.get(i);
                 if (ifVal instanceof List<?>) {
                     if (((List<String>) ((List<?>) ifVal)).contains(row)) {
                         _then.forEach((k, v) -> {
-                            thenCols.get(k).add(v);
+                            thenCols.get(k).set(j,v);
                         });
                     }
                 } else if (row.equals((String)ifVal)){
                     // fix up the new _then columns added above
-                    _then.forEach((k, v) -> {
-                        thenCols.get(k).add(v);
-                    });
-                } else
-                    thenCols.forEach((k,v) -> { v.add("");});
+                    _then.forEach((k, v) -> thenCols.get(k).set(j,v));
+                }
             }
-            // now replace the new then columns with modified ones
-            thenCols.forEach((k,v) -> { this.csvTable.rows.put(k,v); });
+            //thenCols.forEach((k,v) -> System.out.println("final val for k " + k + ", is v=" + v));
         });
+        // now replace the new then columns with modified ones
+        thenCols.forEach((k,v) -> { this.csvTable.rows.put(k,v); });
     }
 
-    // FIXME: improve error reporting
     // FIXME: implement wildcards and $HOME support
     public void processDerive(Derive derive) throws DeriveNoAttrFoundException {
         Map<String, String> env = System.getenv(); // environment variables may be needed

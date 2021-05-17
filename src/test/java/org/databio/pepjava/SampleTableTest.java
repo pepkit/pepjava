@@ -5,6 +5,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -86,6 +88,36 @@ class SampleTableTest {
 
     @org.junit.jupiter.api.Test
     void processImply() {
+
+        ObjectMapper mapper;
+        Project project;
+        YAMLProject yamlProject;
+
+        try {
+            mapper = new ObjectMapper(new YAMLFactory());
+            mapper.findAndRegisterModules();
+            project = new Project("src/test/resources/imply_correct.yaml", mapper);
+            project.processAllSections();
+            yamlProject = project.getYamlProject();
+        } catch (Exception e) {
+            throw new AssertionError("Problem processing project file for unit test");
+        }
+
+        assertTrue(project.getSampleTable().getSampleTableHeaders().contains("genome"));
+        assertTrue(project.getSampleTable().getSampleTableHeaders().contains("macs_genome_size"));
+        Map<String, List<String>> rows = project.getSampleTable().getSampleTableRows();
+        List <String> rowsHuman = rows.get("organism").stream().filter(a -> a.equals("human")).collect(Collectors.toList());
+        assertNotNull(rowsHuman);
+        assert(!rowsHuman.isEmpty());
+        List<String> rowsGenome = rows.get("genome");
+        assertNotNull(rowsGenome);
+        assert(!rowsGenome.isEmpty());
+        assert(rowsGenome.get(3).equals("hg38"));
+        assert(rowsGenome.get(5).equals("mm10"));
+        List<String> rowsMacs = rows.get("macs_genome_size");
+        assert(!rowsMacs.isEmpty());
+        assert(rowsMacs.get(3).equals("hs"));
+        assert(rowsMacs.get(5).equals("mm"));
     }
 
     @org.junit.jupiter.api.Test
